@@ -38,6 +38,25 @@ Desktop.ini
 output/
 *.out
 *.tmp
+*.bak
+*.orig
+*.swp
+
+# ============================
+# Datos / Archivos sensibles
+# ============================
+*.sqlite3
+*.db
+*.lock
+*.env
+*.secret
+*.pem
+*.crt
+*.key
+secrets/
+credentials/
+*.pkl
+*.h5
 
 # ============================
 # Jupyter / IPython
@@ -72,10 +91,16 @@ htmlcov/
 .pytype/
 
 # ============================
+# Datasets / Ejemplos
+# ============================
+examples/*
+!examples/README.md  # permite documentar ejemplos pero no subir datos pesados
+
+# ============================
 # Otros
 # ============================
-*.sqlite3
-*.db
-*.lock
-*.bak
-*.orig
+*.cache
+*.tar
+*.gz
+*.zip
+*.7z

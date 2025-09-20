@@ -1,151 +1,308 @@
 # 🌵 Detector de Nopal
 
-Sistema de detección de nopal utilizando *computer vision* con OpenCV y algoritmos ORB + Homografía.
+Sistema avanzado de detección de nopal utilizando computer vision con OpenCV y algoritmos ORB + Homografía.
 
-## 📁 Estructura del proyecto
+**🐍 100% Python - Sin dependencias externas**
 
-```bash
+## ✨ Características
+
+- 🚀 **Un solo comando** para instalación completa
+- 🐍 **Solo Python** - sin make, npm, o herramientas externas  
+- 🔧 **Multiplataforma** - Windows, Linux, macOS
+- 📦 **Virtual environment** automático
+- 🎯 **Múltiples fuentes** - cámara, imagen, video
+- 📊 **Diagnósticos inteligentes** con colores
+
+## 📁 Estructura
+
+```
 nopal-detector/
-├── nopal_all_in_one.py    # Script principal (auto-configura todo)
-├── data/
-│   └── ref/               # Coloca aquí la imagen de referencia
-│       └── nopal_ref.jpg  # Imagen de referencia del nopal
-├── examples/              # Imágenes/videos de ejemplo para probar
-├── output/                # Archivos de salida generados
-└── README.md              # Este archivo
+├── 🐍 manage.py              # ← GESTOR PRINCIPAL (todo en uno)
+├── 🐍 nopal_all_in_one.py    # Script detector (auto-setup incluido)
+├── 📋 requirements.txt       # Dependencias: OpenCV + NumPy
+├── 📄 README.md              # Esta documentación
+├── 📁 data/ref/              # Imagen de referencia (¡REQUERIDA!)
+├── 📁 examples/              # Imágenes/videos de prueba
+└── 📁 output/                # Resultados generados
 ```
 
-👉 **Nota:** si no existen las carpetas `data/ref`, `examples` u `output`, el script las crea automáticamente al ejecutarse.
-
----
-
-## 🚀 Uso rápido
-
-El script es completamente auto-contenido. Se encarga de:
-- ✅ Crear entorno virtual (`.venv`)
-- ✅ Instalar OpenCV y NumPy
-- ✅ Verificar dependencias del sistema
-- ✅ Ejecutar el detector
-
-### Comandos básicos
+## 🚀 Inicio rápido (3 comandos)
 
 ```bash
-# 📷 Detección con cámara web (índice 0)
-python nopal_all_in_one.py --source 0 --ref data/ref/nopal_ref.jpg
+# 1. Instalación completa automática
+python manage.py install
 
-# 🖼️ Detección en imagen con guardado
-python nopal_all_in_one.py --source examples/mi_foto.jpg --ref data/ref/nopal_ref.jpg --save output/resultado.png
+# 2. Coloca tu imagen: data/ref/nopal_ref.jpg 
 
-# 🎥 Detección en video con guardado
-python nopal_all_in_one.py --source examples/mi_video.mp4 --ref data/ref/nopal_ref.jpg --save output/resultado.mp4
+# 3. ¡Ejecutar!
+python manage.py run
 ```
 
----
+## 📋 Todos los comandos
 
-## 🔧 Parámetros avanzados
+### 📦 **CONFIGURACIÓN**
+```bash
+python manage.py install     # 🎯 Instalación completa automática
+python manage.py setup       # 🔧 Solo venv + dependencias  
+python manage.py folders     # 📁 Solo crear carpetas
+```
+
+### 🚀 **EJECUCIÓN** 
+```bash
+python manage.py run          # 📷 Cámara web (básico)
+python manage.py run-camera   # 📷 Cámara + guardar video
+python manage.py run-image    # 🖼️ Imagen (usar --source)
+python manage.py run-video    # 🎥 Video (usar --source)
+```
+
+### 🔧 **UTILIDADES**
+```bash
+python manage.py status       # 📊 Ver estado completo
+python manage.py check        # ✅ Verificar dependencias
+python manage.py clean        # 🧹 Limpiar todo
+```
+
+## 💡 Ejemplos de uso
+
+### **Instalación y primer uso:**
+```bash
+# Instalar desde cero
+python manage.py install
+
+# Ver qué falta
+python manage.py status
+
+# Ejecutar (necesita imagen de referencia)
+python manage.py run
+```
+
+### **Detección con diferentes fuentes:**
+```bash
+# Cámara web con guardado
+python manage.py run-camera
+
+# Imagen específica
+python manage.py run-image --source examples/mi_foto.jpg --save output/resultado.png
+
+# Video específico  
+python manage.py run-video --source examples/mi_video.mp4 --save output/resultado.mp4
+
+# Cámara con parámetros ajustados
+python manage.py run --source 0 --min_matches 12 --ratio 0.8
+```
+
+### **Mantenimiento:**
+```bash
+# Verificar todo funciona
+python manage.py check
+
+# Empezar completamente limpio
+python manage.py clean
+python manage.py install
+```
+
+## 📊 Diagnósticos automáticos
+
+El comando `status` te muestra exactamente qué falta:
 
 ```bash
-python nopal_all_in_one.py   --source examples/test.jpg   --ref data/ref/nopal_ref.jpg   --save output/result.png   --min_matches 12   --ratio 0.8
+python manage.py status
 ```
 
-- `--min_matches`: Mínimo de coincidencias para detección (default: 18)
-- `--ratio`: Ratio test de Lowe para filtrar matches (default: 0.75)
+**Ejemplo de salida:**
+```
+🌵 Estado del Proyecto
+==================================================
 
----
+🔍 Entorno Virtual:
+  ✅ .venv existe
+  ✅ Python 3.12.10
 
-## 📋 Requisitos previos
+📁 Estructura de carpetas:
+  ✅ data/
+  ✅ data/ref/
+  ✅ examples/
+  ✅ output/
 
-- **Python 3.7+** (recomendado: 3.10 o superior)
-- **Imagen de referencia**: Coloca una foto clara del nopal en `data/ref/nopal_ref.jpg`
-- En Linux/macOS puede requerirse instalar librerías del sistema:
-  ```bash
-  sudo apt update && sudo apt install -y libgl1 libglib2.0-0 libgtk-3-0 ffmpeg
-  ```
+🖼️ Imagen de referencia:
+  ❌ data/ref/nopal_ref.jpg falta - coloca tu imagen
 
----
-
-## 📦 Instalación de dependencias (similar a `npm i`)
-
-### Windows (PowerShell)
-
-```powershell
-py -3 -m venv .venv
-.\.venv\Scripts\python -m pip install --upgrade pip wheel
-.\.venv\Scripts\python -m pip install opencv-python numpy
+📦 Dependencias:
+  ✅ OpenCV 4.9.0
+  ✅ NumPy 1.26.4
 ```
 
-### macOS / Linux
+## 🎯 Imagen de referencia
+
+**⚠️ OBLIGATORIO:** El proyecto necesita una imagen del nopal que quieres detectar.
+
+### **Dónde colocarla:**
+```
+data/ref/nopal_ref.jpg
+```
+
+### **Consejos para mejor detección:**
+- **Resolución:** Mínimo 640x480
+- **Iluminación:** Uniforme y clara  
+- **Enfoque:** Nítido y bien definido
+- **Contenido:** Solo la parte distintiva del nopal
+- **Fondo:** Simple, sin distracciones
+- **Formatos:** JPG, PNG, BMP, TIFF
+
+## 🛠️ Parámetros avanzados
 
 ```bash
-python3 -m venv .venv
-./.venv/bin/python -m pip install --upgrade pip wheel
-./.venv/bin/python -m pip install opencv-python numpy
+python manage.py run \
+  --source 0 \
+  --save output/deteccion.mp4 \
+  --min_matches 15 \
+  --ratio 0.8
 ```
 
-> En servidores sin entorno gráfico, usa `opencv-python-headless` en lugar de `opencv-python`.
+**Parámetros disponibles:**
+- `--source`: Fuente de entrada
+  - `0, 1, 2...` para cámaras
+  - `ruta/imagen.jpg` para imágenes
+  - `ruta/video.mp4` para videos
+- `--save`: Archivo de salida (opcional)
+- `--min_matches`: Mínimo coincidencias válidas (default: 18)
+- `--ratio`: Filtro ratio test de Lowe (default: 0.75)
 
----
+## 📋 Requisitos del sistema
 
-## 🎯 Cómo preparar la imagen de referencia
+**Mínimos:**
+- **Python 3.7+** (recomendado 3.10+)
+- **1GB RAM libre**
+- **500MB espacio en disco**
 
-1. Toma una foto clara del nopal que quieres detectar.  
-2. Asegúrate de que tenga buena textura y contraste.  
-3. Recorta solo la parte distintiva si es necesario.  
-4. Guárdala como `data/ref/nopal_ref.jpg`.  
+**Para mejor rendimiento:**
+- **Cámara web** (detección en tiempo real)
+- **GPU** (acelera OpenCV si está disponible)
+- **ffmpeg** (mejor soporte de video)
 
----
+**Instalación de ffmpeg (opcional):**
+```bash
+# Windows (con chocolatey)
+choco install ffmpeg
+
+# macOS (con homebrew)  
+brew install ffmpeg
+
+# Linux (Ubuntu/Debian)
+sudo apt update && sudo apt install ffmpeg
+```
 
 ## 🐛 Solución de problemas
 
-**"Referencia no encontrada"**  
+### **❌ "Python 3 no encontrado"**
 ```bash
-ls -la data/ref/nopal_ref.jpg
+# Instalar Python 3
+# Windows: https://python.org/downloads/
+# macOS: brew install python3  
+# Linux: sudo apt install python3 python3-venv
 ```
 
-**"Muy pocos puntos clave"**
-- Usa una imagen con más textura/contraste.  
-- Recorta al área más distintiva del nopal.  
-- Prueba con mejor iluminación.  
+### **❌ "Entorno virtual no existe"**
+```bash
+python manage.py setup
+```
 
-**Error de cámara**
-- Verifica permisos de cámara.  
-- Asegúrate de que no esté en uso por otra aplicación.  
-- Prueba con otro índice: `--source 1` o `--source 2`.  
+### **❌ "Imagen de referencia no encontrada"**
+```bash
+# 1. Verificar estructura
+python manage.py folders
 
-**Problemas en Linux**
-- Instala librerías de sistema:  
-  ```bash
-  sudo apt install -y libgl1 libglib2.0-0 libgtk-3-0
-  ```
+# 2. Colocar imagen en: data/ref/nopal_ref.jpg
+# 3. Verificar
+python manage.py status
+```
 
----
+### **❌ "Muy pocos puntos clave"**
+- Mejora la calidad de la imagen de referencia
+- Usa mejor iluminación y enfoque
+- Recorta solo la parte distintiva
+- Prueba con diferentes ángulos
+
+### **❌ "No se puede abrir la cámara"**
+```bash
+# Probar diferentes índices
+python manage.py run --source 1
+python manage.py run --source 2
+
+# Verificar permisos de cámara en tu sistema
+```
+
+### **❌ "Dependencias faltan"**
+```bash
+# Reinstalar todo
+python manage.py clean
+python manage.py install
+```
+
+### **❌ "Errores en Linux"**
+```bash
+# Instalar librerías del sistema
+sudo apt update
+sudo apt install -y python3-venv python3-dev
+sudo apt install -y libgl1 libglib2.0-0 libgtk-3-0
+```
 
 ## 🧠 Cómo funciona
 
-1. **Extracción de características**: Usa ORB para encontrar puntos clave únicos.  
-2. **Matching**: Compara características entre la imagen de referencia y el input.  
-3. **Homografía**: Calcula transformación geométrica para proyectar contornos.  
-4. **Visualización**: Dibuja un polígono verde alrededor del nopal detectado.  
+### **Algoritmo de detección:**
 
----
+1. **Extracción ORB** - Encuentra puntos únicos en la imagen de referencia
+2. **Matching** - Compara características entre referencia y entrada  
+3. **Homografía** - Calcula transformación geométrica con RANSAC
+4. **Proyección** - Dibuja contorno del objeto detectado
+
+### **Flujo de ejecución:**
+```
+┌─────────────┐    ┌──────────────┐    ┌─────────────┐
+│   Imagen    │ -> │  Extracción  │ -> │  Matching   │
+│ Referencia  │    │     ORB      │    │ Bilateral   │
+└─────────────┘    └──────────────┘    └─────────────┘
+                                              │
+┌─────────────┐    ┌──────────────┐    ┌─────────────┐
+│ Detección   │ <- │ Proyección   │ <- │ Homografía  │
+│   Final     │    │  Contorno    │    │   RANSAC    │
+└─────────────┘    └──────────────┘    └─────────────┘
+```
 
 ## 📊 Controles durante ejecución
 
-- **Cámara/Video**: Presiona `q` para salir.  
-- **Imagen**: Presiona cualquier tecla o cierra la ventana.  
+**Modos de operación:**
+- **Cámara/Video**: Presiona `q` para salir
+- **Imagen**: Presiona cualquier tecla o cierra ventana
+- **Batch**: Se guarda automáticamente si usas `--save`
+
+**Información en pantalla:**
+- **Matches: X**: Número de características coincidentes
+- **Rectángulo verde**: Detección confirmada (≥18 matches)
+- **"NOPAL ESPECIFICO"**: Etiqueta cuando detecta
+- **"Sin homografía"**: Detección débil (<18 matches)
+
+## 🔄 Modo desarrollo
+
+Para desarrolladores que quieren modificar el código:
+
+```bash
+# Usar el script original (auto-setup incluido)
+python nopal_all_in_one.py --help
+python nopal_all_in_one.py --source 0 --ref data/ref/nopal_ref.jpg
+
+# O usar el gestor para desarrollo  
+python manage.py run --source examples/test.jpg
+```
 
 ---
 
-## 💡 Tip extra: Configuración en VS Code
+## 📞 Información
 
-Selecciona el intérprete de tu venv:  
-`Ctrl+Shift+P` → “Python: Select Interpreter” → `.venv/bin/python` (Linux/macOS) o `.venv\Scripts\python.exe` (Windows).
+**Desarrollado por:** Carlos Armando Boyzo Oregon  
+**Tecnologías:** Python, OpenCV, NumPy, ORB, Homografía  
+**Licencia:** Proyecto de detección con computer vision
 
-Opcional en `.vscode/settings.json`:
+---
 
-```json
-{
-  "python.defaultInterpreterPath": ".venv/bin/python",
-  "python.analysis.extraPaths": [".venv/lib/python3.x/site-packages"]
-}
-```
+**💡 Tip:** Siempre ejecuta `python manage.py status` para ver qué necesita el proyecto.
