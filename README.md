@@ -296,6 +296,34 @@ python manage.py run --source examples/test.jpg
 ```
 
 ---
+## 🎨 Referencia artística
+
+Este proyecto toma **referencias cromáticas y compositivas** de la obra de  
+**Gabriela Sandoval Hernández** — [gabrielasandoval.art](https://gabrielasandoval.art/).
+
+> **Nota ética:** El objetivo es explorar el cruce entre arte y tecnología con
+> inspiración visual (paletas, ritmo, repetición y contraste), **sin reproducir ni
+> imitar directamente el “estilo de” una artista**. Las imágenes generadas por el
+> sistema son originales y no intentan suplantar autoría.
+
+### Pautas de inspiración responsable
+- Usa **paletas vibrantes** y **repetición modular** (series de nopales) para un
+  efecto gráfico contemporáneo.
+- Evita prompts o descripciones del tipo *“al estilo de [artista]”*.  
+- Cita la referencia cuando corresponda y enlaza a la página oficial.
+
+### Paletas sugeridas (sin copiar obras)
+- **Vibrante México**: `#1E8F3B` (verde nopal), `#82D736` (verde claro),
+  `#F4EA2A` (amarillo lima), `#E21E79` (magenta), `#3FA9F5` (azul medio), `#FFFFFF` (fondo).
+- **Alta saturación suave**: `#2AA14A`, `#9BE24B`, `#FFD93B`, `#E84590`, `#67B6FF`.
+
+> Consejo visual: alterna nopales cromáticos con nopales naturales para crear
+> capas de contraste (natural ↔ cromático) y mantener un **ritmo** visual sin
+> replicar composiciones específicas.
+
+### Créditos
+- **Investigación y desarrollo**: Gabriela Sandoval Hernández - Carlos Armando Boyzo Oregon  
+- **Referencia artística**: Gabriela Sandoval Hernández — [gabrielasandoval.art](https://gabrielasandoval.art/)
 
 ## 📞 Información
 
@@ -303,6 +331,9 @@ python manage.py run --source examples/test.jpg
 **Tecnologías:** Python, OpenCV, NumPy, ORB, Homografía  
 **Licencia:** Proyecto de detección con computer vision
 
----
+---  
 
 **💡 Tip:** Siempre ejecuta `python manage.py status` para ver qué necesita el proyecto.
+
+
+
