@@ -43,8 +43,17 @@ python manage.py install
 # ❌ "Imagen de referencia falta"
 # → Colocar imagen en: data/ref/nopal_ref.jpg
 
-# 🧹 Empezar completamente limpio
+# 🧹 Limpieza estándar (venv, cache, temporales)
 python manage.py clean
+
+# 🧹 Limpieza profunda (incluye logs, builds, outputs)
+python manage.py deep-clean
+
+# 💾 Limpieza profunda pero preservando resultados
+python manage.py deep-clean --preserve-outputs
+
+# 🧹 Empezar completamente limpio
+python manage.py deep-clean
 python manage.py install
 ```
 
