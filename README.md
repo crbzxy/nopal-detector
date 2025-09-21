@@ -1,339 +1,234 @@
-# 🌵 Detector de Nopal
+# Detector de Nopal v2.0 - Arquitectura Basada en Componentes
 
-Sistema avanzado de detección de nopal utilizando computer vision con OpenCV y algoritmos ORB + Homografía.
+Una refactorización completa del detector de nopal utilizando OpenCV y algoritmos ORB, ahora con una arquitectura modular y escalable basada en componentes.
 
-**🐍 100% Python - Sin dependencias externas**
+## 🆕 Novedades en v2.0
 
-## ✨ Características
+- **Arquitectura modular**: Separación clara de responsabilidades
+- **Patrón Factory**: Para manejo de diferentes fuentes de entrada
+- **Patrón Observer**: Para salidas flexibles (display, guardado, máscaras)
+- **Configuración centralizada**: Usando dataclasses
+- **Mejor manejo de errores**: Con logging estructurado
+- **CLI mejorado**: Con validación de argumentos y ayuda detallada
+- **Código testeable**: Estructura que facilita unit testing
+- **Type hints**: Para mejor documentación y debugging
 
-- 🚀 **Un solo comando** para instalación completa
-- 🐍 **Solo Python** - sin make, npm, o herramientas externas  
-- 🔧 **Multiplataforma** - Windows, Linux, macOS
-- 📦 **Virtual environment** automático
-- 🎯 **Múltiples fuentes** - cámara, imagen, video
-- 📊 **Diagnósticos inteligentes** con colores
-
-## 📁 Estructura
+## 📁 Estructura del Proyecto
 
 ```
 nopal-detector/
-├── 🐍 manage.py              # ← GESTOR PRINCIPAL (todo en uno)
-├── 🐍 nopal_all_in_one.py    # Script detector (auto-setup incluido)
-├── 📋 requirements.txt       # Dependencias: OpenCV + NumPy
-├── 📄 README.md              # Esta documentación
-├── 📁 data/ref/              # Imagen de referencia (¡REQUERIDA!)
-├── 📁 examples/              # Imágenes/videos de prueba
-└── 📁 output/                # Resultados generados
+├── nopal_detector/                 # Paquete principal
+│   ├── __init__.py
+│   ├── config/                     # Configuración
+│   │   ├── __init__.py
+│   │   └── settings.py            # Configuración centralizada
+│   ├── core/                      # Lógica principal
+│   │   ├── __init__.py
+│   │   └── detector.py            # Detector principal
+│   ├── services/                  # Servicios especializados
+│   │   ├── __init__.py
+│   │   ├── detection.py           # Servicio OpenCV
+│   │   ├── environment.py         # Gestión del entorno
+│   │   ├── output.py              # Observers de salida
+│   │   └── sources.py             # Factory de fuentes
+│   ├── utils/                     # Utilidades
+│   │   ├── __init__.py
+│   │   ├── colors.py              # Manejo de colores
+│   │   └── logging.py             # Sistema de logging
+│   ├── cli/                       # Interfaz de línea de comandos
+│   │   ├── __init__.py
+│   │   └── main.py                # CLI principal
+│   └── tests/                     # Tests (futuro)
+│       └── __init__.py
+├── main.py                        # Punto de entrada
+├── setup.py                       # Configuración del paquete
+├── requirements.txt               # Dependencias
+├── data/                          # Datos de referencia
+│   └── ref/
+│       ├── nopal_ref.jpg
+│       └── nopal_ref2.jpg
+├── examples/                      # Ejemplos de entrada
+│   ├── example.png
+│   └── example2.png
+└── output/                        # Salidas generadas
 ```
 
-## 🚀 Inicio rápido (3 comandos)
+## 🚀 Instalación y Uso
+
+### Uso Básico
 
 ```bash
-# 1. Instalación completa automática
-python manage.py install
+# Detector con cámara
+python main.py --source 0
 
-# 2. Coloca tu imagen: data/ref/nopal_ref.jpg 
+# Detector con imagen
+python main.py --source examples/example.png --output output/result.png
 
-# 3. ¡Ejecutar!
-python manage.py run
+# Detector con video
+python main.py --source video.mp4 --output output/result.mp4
+
+# Detector con máscara (solo imágenes)
+python main.py --source examples/example.png --mask output/mask.png
 ```
 
-## 📋 Todos los comandos
-
-### 📦 **CONFIGURACIÓN**
-```bash
-python manage.py install     # 🎯 Instalación completa automática
-python manage.py setup       # 🔧 Solo venv + dependencias  
-python manage.py folders     # 📁 Solo crear carpetas
-```
-
-### 🚀 **EJECUCIÓN** 
-```bash
-python manage.py run          # 📷 Cámara web (básico)
-python manage.py run-camera   # 📷 Cámara + guardar video
-python manage.py run-image    # 🖼️ Imagen (usar --source)
-python manage.py run-video    # 🎥 Video (usar --source)
-```
-
-### 🔧 **UTILIDADES**
-```bash
-python manage.py status       # 📊 Ver estado completo
-python manage.py check        # ✅ Verificar dependencias
-python manage.py clean        # 🧹 Limpiar todo
-```
-
-## 💡 Ejemplos de uso
-
-### **Instalación y primer uso:**
-```bash
-# Instalar desde cero
-python manage.py install
-
-# Ver qué falta
-python manage.py status
-
-# Ejecutar (necesita imagen de referencia)
-python manage.py run
-```
-
-### **Detección con diferentes fuentes:**
-```bash
-# Cámara web con guardado
-python manage.py run-camera
-
-# Imagen específica
-python manage.py run-image --source examples/mi_foto.jpg --save output/resultado.png
-
-# Video específico  
-python manage.py run-video --source examples/mi_video.mp4 --save output/resultado.mp4
-
-# Cámara con parámetros ajustados
-python manage.py run --source 0 --min_matches 12 --ratio 0.8
-```
-
-### **Mantenimiento:**
-```bash
-# Verificar todo funciona
-python manage.py check
-
-# Empezar completamente limpio
-python manage.py clean
-python manage.py install
-```
-
-## 📊 Diagnósticos automáticos
-
-El comando `status` te muestra exactamente qué falta:
+### Parámetros Avanzados
 
 ```bash
-python manage.py status
+# Personalizar parámetros ORB
+python main.py --source examples/example.png \
+    --min-matches 15 \
+    --ratio 0.8 \
+    --orb-features 3000
+
+# Personalizar visualización
+python main.py --source 0 \
+    --border-color "255,0,0" \
+    --fill-color "0,0,255" \
+    --fill-alpha 0.3
+
+# Modo sin display (útil for scripts)
+python main.py --source examples/example.png \
+    --no-display \
+    --output output/result.png
+
+# Modo verbose para debugging
+python main.py --source examples/example.png --verbose
 ```
 
-**Ejemplo de salida:**
-```
-🌵 Estado del Proyecto
-==================================================
-
-🔍 Entorno Virtual:
-  ✅ .venv existe
-  ✅ Python 3.12.10
-
-📁 Estructura de carpetas:
-  ✅ data/
-  ✅ data/ref/
-  ✅ examples/
-  ✅ output/
-
-🖼️ Imagen de referencia:
-  ❌ data/ref/nopal_ref.jpg falta - coloca tu imagen
-
-📦 Dependencias:
-  ✅ OpenCV 4.9.0
-  ✅ NumPy 1.26.4
-```
-
-## 🎯 Imagen de referencia
-
-**⚠️ OBLIGATORIO:** El proyecto necesita una imagen del nopal que quieres detectar.
-
-### **Dónde colocarla:**
-```
-data/ref/nopal_ref.jpg
-```
-
-### **Consejos para mejor detección:**
-- **Resolución:** Mínimo 640x480
-- **Iluminación:** Uniforme y clara  
-- **Enfoque:** Nítido y bien definido
-- **Contenido:** Solo la parte distintiva del nopal
-- **Fondo:** Simple, sin distracciones
-- **Formatos:** JPG, PNG, BMP, TIFF
-
-## 🛠️ Parámetros avanzados
+### Ayuda Completa
 
 ```bash
-python manage.py run \
-  --source 0 \
-  --save output/deteccion.mp4 \
-  --min_matches 15 \
-  --ratio 0.8
+python main.py --help
 ```
 
-**Parámetros disponibles:**
-- `--source`: Fuente de entrada
-  - `0, 1, 2...` para cámaras
-  - `ruta/imagen.jpg` para imágenes
-  - `ruta/video.mp4` para videos
-- `--save`: Archivo de salida (opcional)
-- `--min_matches`: Mínimo coincidencias válidas (default: 18)
-- `--ratio`: Filtro ratio test de Lowe (default: 0.75)
+## 🏗️ Arquitectura
 
-## 📋 Requisitos del sistema
+### Componentes Principales
 
-**Mínimos:**
-- **Python 3.7+** (recomendado 3.10+)
-- **1GB RAM libre**
-- **500MB espacio en disco**
+1. **ApplicationConfig**: Configuración centralizada usando dataclasses
+2. **NopalDetector**: Orquestador principal que coordina todos los servicios
+3. **OpenCVService**: Lógica de detección ORB pura
+4. **SourceManager**: Gestión uniforme de fuentes (imagen/video/cámara)
+5. **OutputManager**: Sistema de observers para múltiples salidas
+6. **EnvironmentService**: Gestión del entorno y dependencias
 
-**Para mejor rendimiento:**
-- **Cámara web** (detección en tiempo real)
-- **GPU** (acelera OpenCV si está disponible)
-- **ffmpeg** (mejor soporte de video)
+### Patrones de Diseño Utilizados
 
-**Instalación de ffmpeg (opcional):**
-```bash
-# Windows (con chocolatey)
-choco install ffmpeg
+- **Factory Pattern**: `SourceFactory`, `OutputFactory`
+- **Observer Pattern**: `OutputObserver` y subclases
+- **Strategy Pattern**: Diferentes estrategias de fuente (imagen, video, cámara)
+- **Dependency Injection**: Configuración inyectada en servicios
+- **Single Responsibility**: Cada clase tiene una responsabilidad específica
 
-# macOS (con homebrew)  
-brew install ffmpeg
+### Ventajas de la Nueva Arquitectura
 
-# Linux (Ubuntu/Debian)
-sudo apt update && sudo apt install ffmpeg
-```
+1. **Modularidad**: Cada componente es independiente y reutilizable
+2. **Testabilidad**: Fácil de mockear componentes para testing
+3. **Extensibilidad**: Agregar nuevas fuentes o salidas es sencillo
+4. **Mantenibilidad**: Código organizado y documentado
+5. **Flexibilidad**: Configuración externa sin modificar código
 
-## 🐛 Solución de problemas
+## 🔧 Desarrollo
 
-### **❌ "Python 3 no encontrado"**
-```bash
-# Instalar Python 3
-# Windows: https://python.org/downloads/
-# macOS: brew install python3  
-# Linux: sudo apt install python3 python3-venv
-```
-
-### **❌ "Entorno virtual no existe"**
-```bash
-python manage.py setup
-```
-
-### **❌ "Imagen de referencia no encontrada"**
-```bash
-# 1. Verificar estructura
-python manage.py folders
-
-# 2. Colocar imagen en: data/ref/nopal_ref.jpg
-# 3. Verificar
-python manage.py status
-```
-
-### **❌ "Muy pocos puntos clave"**
-- Mejora la calidad de la imagen de referencia
-- Usa mejor iluminación y enfoque
-- Recorta solo la parte distintiva
-- Prueba con diferentes ángulos
-
-### **❌ "No se puede abrir la cámara"**
-```bash
-# Probar diferentes índices
-python manage.py run --source 1
-python manage.py run --source 2
-
-# Verificar permisos de cámara en tu sistema
-```
-
-### **❌ "Dependencias faltan"**
-```bash
-# Reinstalar todo
-python manage.py clean
-python manage.py install
-```
-
-### **❌ "Errores en Linux"**
-```bash
-# Instalar librerías del sistema
-sudo apt update
-sudo apt install -y python3-venv python3-dev
-sudo apt install -y libgl1 libglib2.0-0 libgtk-3-0
-```
-
-## 🧠 Cómo funciona
-
-### **Algoritmo de detección:**
-
-1. **Extracción ORB** - Encuentra puntos únicos en la imagen de referencia
-2. **Matching** - Compara características entre referencia y entrada  
-3. **Homografía** - Calcula transformación geométrica con RANSAC
-4. **Proyección** - Dibuja contorno del objeto detectado
-
-### **Flujo de ejecución:**
-```
-┌─────────────┐    ┌──────────────┐    ┌─────────────┐
-│   Imagen    │ -> │  Extracción  │ -> │  Matching   │
-│ Referencia  │    │     ORB      │    │ Bilateral   │
-└─────────────┘    └──────────────┘    └─────────────┘
-                                              │
-┌─────────────┐    ┌──────────────┐    ┌─────────────┐
-│ Detección   │ <- │ Proyección   │ <- │ Homografía  │
-│   Final     │    │  Contorno    │    │   RANSAC    │
-└─────────────┘    └──────────────┘    └─────────────┘
-```
-
-## 📊 Controles durante ejecución
-
-**Modos de operación:**
-- **Cámara/Video**: Presiona `q` para salir
-- **Imagen**: Presiona cualquier tecla o cierra ventana
-- **Batch**: Se guarda automáticamente si usas `--save`
-
-**Información en pantalla:**
-- **Matches: X**: Número de características coincidentes
-- **Rectángulo verde**: Detección confirmada (≥18 matches)
-- **"NOPAL ESPECIFICO"**: Etiqueta cuando detecta
-- **"Sin homografía"**: Detección débil (<18 matches)
-
-## 🔄 Modo desarrollo
-
-Para desarrolladores que quieren modificar el código:
+### Ejecutar Tests (Future)
 
 ```bash
-# Usar el script original (auto-setup incluido)
-python nopal_all_in_one.py --help
-python nopal_all_in_one.py --source 0 --ref data/ref/nopal_ref.jpg
-
-# O usar el gestor para desarrollo  
-python manage.py run --source examples/test.jpg
+python -m pytest nopal_detector/tests/
 ```
 
+### Formateo de Código
+
+```bash
+# Instalar herramientas de desarrollo
+pip install -e ".[dev]"
+
+# Formatear código
+black nopal_detector/
+isort nopal_detector/
+
+# Linting
+flake8 nopal_detector/
+mypy nopal_detector/
+```
+
+## 🆚 Comparación con v1.0
+
+| Característica | v1.0 (Monolítico) | v2.0 (Componentes) |
+|----------------|--------------------|--------------------|
+| Líneas de código | ~600 en 1 archivo | ~1500 en múltiples archivos |
+| Testabilidad | Difícil | Fácil |
+| Mantenimiento | Complicado | Sencillo |
+| Extensibilidad | Limitada | Alta |
+| Separación de responsabilidades | No | Sí |
+| Reutilización | Baja | Alta |
+| Configuración | Hardcodeada | Centralizada |
+| Logging | Básico | Estructurado |
+| Error handling | Limitado | Robusto |
+
+## 📚 Ejemplos de Uso Programático
+
+```python
+from nopal_detector.config.settings import ApplicationConfig
+from nopal_detector.core.detector import NopalDetector
+
+# Crear detector con configuración por defecto
+config = ApplicationConfig.create_default()
+detector = NopalDetector(config)
+
+# Detectar desde imagen
+success = detector.detect_from_source(
+    source_path="examples/example.png",
+    reference_path="data/ref/nopal_ref.jpg",
+    output_path="output/result.png",
+    show_display=False
+)
+
+# Personalizar parámetros ORB
+custom_orb = {
+    'min_matches': 20,
+    'ratio_threshold': 0.8
+}
+
+custom_drawing = {
+    'border_color': (255, 0, 0),  # Rojo
+    'fill_alpha': 0.4
+}
+
+success = detector.detect_from_source(
+    source_path="0",  # Cámara
+    reference_path="data/ref/nopal_ref.jpg",
+    custom_orb_params=custom_orb,
+    custom_drawing_params=custom_drawing
+)
+```
+
+## 🤝 Contribuir
+
+1. Fork del repositorio
+2. Crear rama para feature (`git checkout -b feature/nueva-feature`)
+3. Commit cambios (`git commit -am 'Agregar nueva feature'`)
+4. Push a la rama (`git push origin feature/nueva-feature`)
+5. Crear Pull Request
+
+## 📄 Licencia
+
+MIT License - ver [LICENSE](LICENSE) para detalles.
+
+## 👨‍💻 Autor
+
+**Carlos Armando Boyzo Oregon**  
 ---
-## 🎨 Referencia artística
 
-Este proyecto toma **referencias cromáticas y compositivas** de la obra de  
-**Gabriela Sandoval Hernández** — [gabrielasandoval.art](https://gabrielasandoval.art/).
+## 🚀 Migración desde v1.0
 
-> **Nota ética:** El objetivo es explorar el cruce entre arte y tecnología con
-> inspiración visual (paletas, ritmo, repetición y contraste), **sin reproducir ni
-> imitar directamente el “estilo de” una artista**. Las imágenes generadas por el
-> sistema son originales y no intentan suplantar autoría.
+Si estás usando la versión monolítica (v1.0), la migración es transparente:
 
-### Pautas de inspiración responsable
-- Usa **paletas vibrantes** y **repetición modular** (series de nopales) para un
-  efecto gráfico contemporáneo.
-- Evita prompts o descripciones del tipo *“al estilo de [artista]”*.  
-- Cita la referencia cuando corresponda y enlaza a la página oficial.
+```bash
+# v1.0
+python nopal_all_in_one.py --source examples/example.png --ref data/ref/nopal_ref.jpg
 
-### Paletas sugeridas (sin copiar obras)
-- **Vibrante México**: `#1E8F3B` (verde nopal), `#82D736` (verde claro),
-  `#F4EA2A` (amarillo lima), `#E21E79` (magenta), `#3FA9F5` (azul medio), `#FFFFFF` (fondo).
-- **Alta saturación suave**: `#2AA14A`, `#9BE24B`, `#FFD93B`, `#E84590`, `#67B6FF`.
+# v2.0 (equivalente)
+python main.py --source examples/example.png --reference data/ref/nopal_ref.jpg
+```
 
-> Consejo visual: alterna nopales cromáticos con nopales naturales para crear
-> capas de contraste (natural ↔ cromático) y mantener un **ritmo** visual sin
-> replicar composiciones específicas.
-
-### Créditos
-- **Investigación y desarrollo**: Gabriela Sandoval Hernández - Carlos Armando Boyzo Oregon  
-- **Referencia artística**: Gabriela Sandoval Hernández — [gabrielasandoval.art](https://gabrielasandoval.art/)
-
-## 📞 Información
-
-**Desarrollado por:** Carlos Armando Boyzo Oregon  
-**Tecnologías:** Python, OpenCV, NumPy, ORB, Homografía  
-**Licencia:** Proyecto de detección con computer vision
-
----  
-
-**💡 Tip:** Siempre ejecuta `python manage.py status` para ver qué necesita el proyecto.
-
-
-
+Los parámetros principales son compatibles, con mejoras en nombres más descriptivos y validación de entrada.

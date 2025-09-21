@@ -7,12 +7,19 @@ Script “todo en uno” para:
 2) Instalar dependencias (opencv-python, numpy)
 3) Verificar librerías del sistema y sugerir soluciones
 4) Ejecutar detector ORB + Homography (imagen / video / cámara)
-5) Manejo de errores con pistas de solución
+5) Dibujar silueta (borde verde) y capa de relleno (overlay)
+6) Manejo de errores con pistas de solución
 
 Uso rápido:
   python nopal_all_in_one.py --source 0 --ref data/ref/nopal_ref.jpg
   python nopal_all_in_one.py --source ./foto.jpg --ref ./data/ref/nopal_ref.jpg --save ./out.png
   python nopal_all_in_one.py --source ./video.mp4 --ref ./data/ref/nopal_ref.jpg --save ./out.mp4
+
+Extras (color/alpha/máscara):
+  --border_color 0,255,0       # Borde verde (RGB)
+  --fill_color 0,255,0         # Relleno verde (RGB)
+  --fill_alpha 0.25            # Opacidad del relleno [0-1]
+  --save_mask output/mask.png  # Guarda máscara binaria (solo en modo imagen)
 """
 
 from __future__ import annotations
@@ -41,6 +48,7 @@ IS_MAC = platform.system().lower().startswith("darwin")
 IS_LINUX = platform.system().lower().startswith("linux")
 
 
+# ---------------------- utilidades de consola ---------------------- #
 def info(msg: str) -> None:
     """Log informativo."""
     print(f"[INFO] {msg}")
@@ -152,11 +160,10 @@ def relaunch_inside_venv(argv: List[str]) -> None:
     sys.exit(result.returncode)
 
 
-# ==================== BLOQUE DETECTOR ====================
-
+# ==================== BLOQUE DETECTOR ==================== #
 @dataclass
 class OrbContext:
-    """Contexto de detección ORB y parámetros de matching."""
+    """Contexto de detección ORB + parámetros de matching y dibujo."""
     orb: Any
     bf: Any
     kp_ref: List[Any]
@@ -165,6 +172,21 @@ class OrbContext:
     ref_w: int
     min_matches: int
     ratio: float
+    border_bgr: tuple[int, int, int]
+    fill_bgr: tuple[int, int, int]
+    fill_alpha: float
+
+
+def parse_rgb_to_bgr(rgb_text: str) -> tuple[int, int, int]:
+    """Convierte 'R,G,B' (0-255) a tupla BGR para OpenCV."""
+    parts = [p.strip() for p in rgb_text.split(",")]
+    if len(parts) != 3:
+        raise ValueError("Color inválido. Usa formato R,G,B (ej. 0,255,0).")
+    r, g, b = (int(parts[0]), int(parts[1]), int(parts[2]))
+    for v in (r, g, b):
+        if v < 0 or v > 255:
+            raise ValueError("Cada componente RGB debe estar entre 0 y 255.")
+    return (b, g, r)  # OpenCV usa BGR
 
 
 def open_source(src: str) -> Tuple[Optional[Any], bool, Optional[Any]]:
@@ -224,8 +246,15 @@ def prepare_orb(ref_gray: Any, nfeatures: int = 2000) -> Tuple[Any, Any, List[An
     return orb, bf, kp_ref, des_ref
 
 
-def build_context(ref_gray: Any, min_matches: int, ratio: float) -> OrbContext:
-    """Construye el contexto ORB/BF con metadatos de referencia y umbrales."""
+def build_context(
+    ref_gray: Any,
+    min_matches: int,
+    ratio: float,
+    border_bgr: tuple[int, int, int],
+    fill_bgr: tuple[int, int, int],
+    fill_alpha: float,
+) -> OrbContext:
+    """Construye el contexto ORB/BF con metadatos de referencia y umbrales + dibujo."""
     orb, bf, kp_ref, des_ref = prepare_orb(ref_gray)
     h_ref, w_ref = ref_gray.shape
     return OrbContext(
@@ -237,22 +266,31 @@ def build_context(ref_gray: Any, min_matches: int, ratio: float) -> OrbContext:
         ref_w=w_ref,
         min_matches=min_matches,
         ratio=ratio,
+        border_bgr=border_bgr,
+        fill_bgr=fill_bgr,
+        fill_alpha=fill_alpha,
     )
 
 
-def detect_and_draw(frame: Any, ctx: OrbContext) -> Any:
+def detect_and_draw(frame: Any, ctx: OrbContext) -> tuple[Any, Optional[Any]]:
     """
-    Detecta el nopal específico en 'frame' usando ORB+Homography
-    y dibuja el polígono de proyección si la homografía es válida.
+    Detecta el nopal específico y:
+      - Dibuja su silueta con borde (ctx.border_bgr).
+      - Rellena el área proyectada con overlay semitransparente
+        (ctx.fill_bgr, ctx.fill_alpha).
+      - Devuelve también una máscara binaria (255 dentro de la silueta),
+        o None si no hubo homografía.
     """
     import cv2 as _cv2  # pylint: disable=import-outside-toplevel
     import numpy as _np  # pylint: disable=import-outside-toplevel
 
-    output = frame.copy()
-    gray = _cv2.cvtColor(frame, _cv2.COLOR_BGR2GRAY)
+    out = frame.copy()
+    mask_bin: Optional[Any] = None
 
+    gray = _cv2.cvtColor(frame, _cv2.COLOR_BGR2GRAY)
     kp_frm, des_frm = ctx.orb.detectAndCompute(gray, None)
-    good = []
+
+    good: list = []
     if des_frm is not None and kp_frm and len(kp_frm) >= 8:
         matches = ctx.bf.knnMatch(ctx.des_ref, des_frm, k=2)
         for m, n in matches:
@@ -260,7 +298,7 @@ def detect_and_draw(frame: Any, ctx: OrbContext) -> Any:
                 good.append(m)
 
         _cv2.putText(
-            output,
+            out,
             f"Matches: {len(good)}",
             (10, 28),
             _cv2.FONT_HERSHEY_SIMPLEX,
@@ -272,26 +310,33 @@ def detect_and_draw(frame: Any, ctx: OrbContext) -> Any:
         if len(good) >= ctx.min_matches:
             src_pts = _np.float32([ctx.kp_ref[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
             dst_pts = _np.float32([kp_frm[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
-            homography, _mask = _cv2.findHomography(src_pts, dst_pts, _cv2.RANSAC, 5.0)
+            H, _inliers = _cv2.findHomography(src_pts, dst_pts, _cv2.RANSAC, 5.0)
 
-            if homography is not None:
+            if H is not None:
+                # Polígono proyectado de la imagen de referencia
                 corners = _np.float32(
                     [[0, 0], [ctx.ref_w, 0], [ctx.ref_w, ctx.ref_h], [0, ctx.ref_h]]
                 ).reshape(-1, 1, 2)
-                proj = _cv2.perspectiveTransform(corners, homography)
+                proj = _cv2.perspectiveTransform(corners, H)
+                proj_i = _np.int32(proj)
 
-                output = _cv2.polylines(
-                    output,
-                    [_np.int32(proj)],
-                    True,
-                    (0, 255, 0),
-                    3,
-                    _cv2.LINE_AA,
-                )
+                # --- Máscara binaria de la silueta ---
+                mask_bin = _np.zeros(out.shape[:2], dtype=_np.uint8)
+                _cv2.fillPoly(mask_bin, [proj_i], 255)
+
+                # --- Overlay de color (otra capa) ---
+                overlay = out.copy()
+                _cv2.fillPoly(overlay, [proj_i], ctx.fill_bgr)
+                out = _cv2.addWeighted(overlay, ctx.fill_alpha, out, 1.0 - ctx.fill_alpha, 0.0)
+
+                # --- Borde de la silueta ---
+                out = _cv2.polylines(out, [proj_i], True, ctx.border_bgr, 3, _cv2.LINE_AA)
+
+                # Etiqueta
                 x0, y0 = int(proj[0, 0, 0]), int(proj[0, 0, 1])
                 _cv2.putText(
-                    output,
-                    "NOPAL ESPECIFICO",
+                    out,
+                    "NOPAL (DETECCION)",
                     (x0, max(20, y0 - 10)),
                     _cv2.FONT_HERSHEY_SIMPLEX,
                     0.7,
@@ -300,7 +345,7 @@ def detect_and_draw(frame: Any, ctx: OrbContext) -> Any:
                 )
             else:
                 _cv2.putText(
-                    output,
+                    out,
                     "Sin homografia",
                     (10, 58),
                     _cv2.FONT_HERSHEY_SIMPLEX,
@@ -310,7 +355,7 @@ def detect_and_draw(frame: Any, ctx: OrbContext) -> Any:
                 )
     else:
         _cv2.putText(
-            output,
+            out,
             "Pocos puntos en frame",
             (10, 28),
             _cv2.FONT_HERSHEY_SIMPLEX,
@@ -319,7 +364,7 @@ def detect_and_draw(frame: Any, ctx: OrbContext) -> Any:
             2,
         )
 
-    return output
+    return out, mask_bin
 
 
 def run_detector(args: argparse.Namespace) -> None:
@@ -328,7 +373,19 @@ def run_detector(args: argparse.Namespace) -> None:
     import numpy as _np  # pylint: disable=import-outside-toplevel, unused-import
 
     _ref_img, ref_gray = load_reference(args.ref)
-    ctx = build_context(ref_gray, args.min_matches, args.ratio)
+
+    # Colores desde CLI (RGB → BGR)
+    border_bgr = parse_rgb_to_bgr(args.border_color)
+    fill_bgr = parse_rgb_to_bgr(args.fill_color)
+
+    ctx = build_context(
+        ref_gray,
+        args.min_matches,
+        args.ratio,
+        border_bgr=border_bgr,
+        fill_bgr=fill_bgr,
+        fill_alpha=args.fill_alpha,
+    )
 
     cap, is_stream, first_frame = open_source(args.source)
 
@@ -351,18 +408,23 @@ def run_detector(args: argparse.Namespace) -> None:
                 if not ok:
                     warn("Fin del stream o frame inválido.")
                     break
-                out = detect_and_draw(frame, ctx)
+                out, _mask = detect_and_draw(frame, ctx)
                 if writer is not None:
                     writer.write(out)
                 _cv2.imshow("Nopal detector (q para salir)", out)
                 if _cv2.waitKey(1) & 0xFF == ord("q"):
                     break
         else:
-            out = detect_and_draw(first_frame, ctx)  # type: ignore[arg-type]
+            out, mask = detect_and_draw(first_frame, ctx)  # type: ignore[arg-type]
             if args.save:
                 Path(args.save).parent.mkdir(parents=True, exist_ok=True)
                 _cv2.imwrite(args.save, out)
                 info(f"Salida guardada en: {args.save}")
+            if args.save_mask and mask is not None:
+                Path(args.save_mask).parent.mkdir(parents=True, exist_ok=True)
+                _cv2.imwrite(args.save_mask, mask)
+                info(f"Máscara guardada en: {args.save_mask}")
+
             _cv2.imshow(
                 "Nopal detector (cierra ventana o presiona cualquier tecla)",
                 out,
@@ -376,6 +438,7 @@ def run_detector(args: argparse.Namespace) -> None:
         _cv2.destroyAllWindows()
 
 
+# ------------------------- CLI / bootstrap ------------------------- #
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     """Define y parsea argumentos de línea de comandos."""
     parser = argparse.ArgumentParser(
@@ -412,6 +475,28 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         type=float,
         default=0.75,
         help="Ratio test de Lowe.",
+    )
+    # --- nuevos parámetros de dibujo y máscara ---
+    parser.add_argument(
+        "--border_color",
+        default="0,255,0",
+        help="Color del borde en RGB, ej. 0,255,0.",
+    )
+    parser.add_argument(
+        "--fill_color",
+        default="0,255,0",
+        help="Color de relleno en RGB, ej. 0,255,0.",
+    )
+    parser.add_argument(
+        "--fill_alpha",
+        type=float,
+        default=0.25,
+        help="Opacidad del relleno [0-1].",
+    )
+    parser.add_argument(
+        "--save_mask",
+        default=None,
+        help="Ruta para guardar la máscara binaria (solo en modo imagen).",
     )
     parser.add_argument(
         "--stage",
@@ -467,8 +552,8 @@ def main() -> None:
             print(" - Si es imagen: que el archivo exista y sea legible.")
             print(" - Si es video: instala ffmpeg y prueba con otro contenedor (mp4).")
             print(
-                " - Si dice 'Muy pocos puntos clave': usa una referencia con más textura/contraste "
-                "o recorta al área más distintiva del nopal."
+                " - Si dice 'Muy pocos puntos clave': usa una referencia con más "
+                "textura/contraste o recorta al área más distintiva del nopal."
             )
             sys.exit(2)
         except Exception as exc:  # pylint: disable=broad-exception-caught

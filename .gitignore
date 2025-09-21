@@ -1,106 +1,87 @@
-# ============================
-# Python
-# ============================
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
-*.pyo
-*.pyd
 
-# Entornos virtuales
-.venv/
-venv/
-env/
-ENV/
-env.bak/
+# C extensions
+*.so
 
-# ============================
-# OS files
-# ============================
-.DS_Store
-Thumbs.db
-ehthumbs.db
-Icon?
-Desktop.ini
-
-# ============================
-# IDE / Editor
-# ============================
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# ============================
-# Logs y salidas
-# ============================
-*.log
-output/
-*.out
-*.tmp
-*.bak
-*.orig
-*.swp
-
-# ============================
-# Datos / Archivos sensibles
-# ============================
-*.sqlite3
-*.db
-*.lock
-*.env
-*.secret
-*.pem
-*.crt
-*.key
-secrets/
-credentials/
-*.pkl
-*.h5
-
-# ============================
-# Jupyter / IPython
-# ============================
-.ipynb_checkpoints/
-*.ipynb
-.profile_default/
-ipython_config.py
-
-# ============================
-# Build / Distribución
-# ============================
+# Distribution / packaging
+.Python
 build/
+develop-eggs/
 dist/
-*.egg-info/
+downloads/
+eggs/
 .eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 MANIFEST
-pip-wheel-metadata/
 
-# ============================
-# Testing / Coverage
-# ============================
-.coverage
-coverage.xml
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
 htmlcov/
-.pytest_cache/
 .tox/
 .nox/
-.mypy_cache/
-.dmypy.json
-.pyre/
-.pytype/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
 
-# ============================
-# Datasets / Ejemplos
-# ============================
-examples/*
-!examples/README.md  # permite documentar ejemplos pero no subir datos pesados
+# Environments
+.env
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
-# ============================
-# Otros
-# ============================
-*.cache
-*.tar
-*.gz
-*.zip
-*.7z
+# PyCharm / IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Project specific
+# Temporary output files
+output/test_*
+output/temp_*
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log*
+
+# Temporary directories
+temp/
+tmp/
