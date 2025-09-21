@@ -282,11 +282,16 @@ def run_detector(source="0", save=None, **kwargs):
     result = run_command(cmd, check=False)
     return result is not None and result.returncode == 0
 
-def clean_project():
-    """Limpia archivos temporales del proyecto"""
-    print_header("Limpiando proyecto")
+def clean_project(deep=False, preserve_outputs=False):
+    """Limpia archivos temporales del proyecto con opciones avanzadas"""
+    if deep:
+        print_header("Limpieza PROFUNDA del proyecto")
+        print_colored("⚠️ ATENCIÓN: Limpieza profunda eliminará TODOS los archivos temporales", Colors.YELLOW)
+    else:
+        print_header("Limpieza estándar del proyecto")
     
-    items_to_clean = [
+    # Items básicos siempre se limpian
+    basic_items = [
         ".venv",
         "__pycache__",
         "temp",
@@ -298,28 +303,145 @@ def clean_project():
         "*.pyd"
     ]
     
+    # Items adicionales para limpieza profunda
+    deep_items = [
+        "build",
+        "dist",
+        "*.egg-info",
+        ".eggs",
+        "htmlcov",
+        ".coverage",
+        ".tox",
+        ".nox",
+        "*.log",
+        "*.tmp",
+        "*.temp",
+        "*.bak",
+        "*.orig",
+        "*.DS_Store",
+        "Thumbs.db",
+        "*.swp",
+        "*.swo"
+    ]
+    
+    # Outputs (solo en limpieza profunda y si no se preservan)
+    output_items = [
+        "output/*.mp4",
+        "output/*.png",
+        "output/*.jpg",
+        "output/*.jpeg"
+    ]
+    
+    items_to_clean = basic_items.copy()
+    
+    if deep:
+        items_to_clean.extend(deep_items)
+        if not preserve_outputs:
+            items_to_clean.extend(output_items)
+            print_colored("🗑️ Incluyendo archivos de salida (output)", Colors.YELLOW)
+        else:
+            print_colored("💾 Preservando archivos de salida (output)", Colors.GREEN)
+    
+    cleaned_count = 0
+    cleaned_size = 0
+    
     for item in items_to_clean:
         if "*" in item:
             # Usar glob para patrones
             from glob import glob
-            for file in glob(item, recursive=True):
+            import os
+            
+            # Buscar en directorio actual y subdirectorios
+            pattern_files = glob(item, recursive=True)
+            # También buscar en subdirectorios específicos
+            for subdir in ["", "**"]:
+                pattern_files.extend(glob(f"{subdir}/{item}", recursive=True))
+            
+            # Eliminar duplicados
+            pattern_files = list(set(pattern_files))
+            
+            for file in pattern_files:
                 try:
                     if os.path.isfile(file):
+                        size = os.path.getsize(file)
                         os.remove(file)
-                        print_colored(f"🗑️ Eliminado: {file}", Colors.YELLOW)
+                        print_colored(f"🗑️ Archivo: {file} ({_format_size(size)})", Colors.YELLOW)
+                        cleaned_count += 1
+                        cleaned_size += size
                 except Exception as e:
                     print_colored(f"⚠️ No se pudo eliminar {file}: {e}", Colors.YELLOW)
         else:
             path = Path(item)
             if path.exists():
-                if path.is_dir():
-                    shutil.rmtree(path)
-                    print_colored(f"🗑️ Eliminado directorio: {item}", Colors.YELLOW)
-                else:
-                    path.unlink()
-                    print_colored(f"🗑️ Eliminado archivo: {item}", Colors.YELLOW)
+                try:
+                    if path.is_dir():
+                        size = _get_dir_size(path)
+                        shutil.rmtree(path)
+                        print_colored(f"🗑️ Directorio: {item}/ ({_format_size(size)})", Colors.YELLOW)
+                        cleaned_count += 1
+                        cleaned_size += size
+                    else:
+                        size = path.stat().st_size
+                        path.unlink()
+                        print_colored(f"🗑️ Archivo: {item} ({_format_size(size)})", Colors.YELLOW)
+                        cleaned_count += 1
+                        cleaned_size += size
+                except Exception as e:
+                    print_colored(f"⚠️ No se pudo eliminar {item}: {e}", Colors.YELLOW)
     
-    print_colored("✅ Limpieza completada", Colors.GREEN)
+    # Limpiar carpetas vacías
+    if deep:
+        _clean_empty_dirs(['temp', 'build', 'dist'])
+    
+    # Resumen de limpieza
+    print("\n" + "="*50)
+    print_colored(f"✅ Limpieza completada", Colors.GREEN)
+    print_colored(f"📊 {cleaned_count} elementos eliminados", Colors.CYAN)
+    print_colored(f"💾 {_format_size(cleaned_size)} liberados", Colors.CYAN)
+    print("="*50)
+    
+    # Sugerencia post-limpieza
+    if cleaned_count > 0:
+        print_colored("💡 Sugerencia: Ejecuta 'python manage.py status' para ver el estado actual", Colors.BLUE)
+
+def _format_size(size_bytes):
+    """Formatea tamaño en bytes a formato legible"""
+    if size_bytes == 0:
+        return "0 B"
+    size_names = ["B", "KB", "MB", "GB"]
+    import math
+    i = int(math.floor(math.log(size_bytes, 1024)))
+    p = math.pow(1024, i)
+    s = round(size_bytes / p, 2)
+    return f"{s} {size_names[i]}"
+
+def _get_dir_size(path):
+    """Calcula el tamaño total de un directorio"""
+    total = 0
+    try:
+        for dirpath, dirnames, filenames in os.walk(path):
+            for f in filenames:
+                fp = os.path.join(dirpath, f)
+                try:
+                    total += os.path.getsize(fp)
+                except (OSError, FileNotFoundError):
+                    pass
+    except (OSError, FileNotFoundError):
+        pass
+    return total
+
+def _clean_empty_dirs(dirs_to_check):
+    """Elimina directorios vacíos"""
+    for dir_name in dirs_to_check:
+        dir_path = Path(dir_name)
+        if dir_path.exists() and dir_path.is_dir():
+            try:
+                # Verificar si está vacío
+                if not any(dir_path.iterdir()):
+                    dir_path.rmdir()
+                    print_colored(f"🗑️ Directorio vacío eliminado: {dir_name}/", Colors.YELLOW)
+            except Exception:
+                pass
 
 def install_project():
     """Instalación completa del proyecto"""
@@ -369,18 +491,20 @@ Comandos disponibles:
 🔧 UTILIDADES:
   status      - Mostrar estado del proyecto
   check       - Verificar dependencias
-  clean       - Limpiar archivos temporales
+  clean       - Limpieza estándar (venv, cache, temporales)
+  deep-clean  - Limpieza profunda (incluye logs, builds, etc.)
 
 Ejemplos:
   python manage.py install
   python manage.py run
   python manage.py run-image --source examples/test.jpg --save output/result.png
   python manage.py run --source 0 --min_matches 12 --ratio 0.8
+  python manage.py clean --deep --preserve-outputs
         """)
     
     parser.add_argument('command', nargs='?', default='help',
                        choices=['help', 'install', 'setup', 'folders', 'status', 'check',
-                               'run', 'run-camera', 'run-image', 'run-video', 'clean'],
+                               'run', 'run-camera', 'run-image', 'run-video', 'clean', 'deep-clean'],
                        help='Comando a ejecutar')
     
     # Parámetros para detector
@@ -388,6 +512,10 @@ Ejemplos:
     parser.add_argument('--save', help='Archivo de salida')
     parser.add_argument('--min_matches', type=int, help='Mínimo coincidencias (default: 18)')
     parser.add_argument('--ratio', type=float, help='Ratio test Lowe (default: 0.75)')
+    
+    # Parámetros para limpieza
+    parser.add_argument('--deep', action='store_true', help='Limpieza profunda (incluye más archivos)')
+    parser.add_argument('--preserve-outputs', action='store_true', help='Preservar archivos de salida en limpieza profunda')
     
     args = parser.parse_args()
     
@@ -419,7 +547,10 @@ Ejemplos:
             print_colored("❌ Entorno virtual no configurado", Colors.RED)
     
     elif args.command == 'clean':
-        clean_project()
+        clean_project(deep=args.deep, preserve_outputs=args.preserve_outputs)
+    
+    elif args.command == 'deep-clean':
+        clean_project(deep=True, preserve_outputs=args.preserve_outputs)
     
     elif args.command.startswith('run'):
         # Configurar parámetros según el tipo de run
