@@ -20,7 +20,8 @@ python manage.py install        # 🎯 TODO en uno
 python manage.py status         # 📊 Ver qué falta
 python manage.py run            # 🚀 Ejecutar detector
 python manage.py run-camera     # 📷 Cámara + guardar
-python manage.py clean          # 🧹 Limpiar todo
+python manage.py clean          # 🧹 Limpieza estándar
+python manage.py deep-clean     # 🧹 Limpieza profunda
 ```
 
 ## 📂 Archivos importantes
